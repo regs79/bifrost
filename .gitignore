@@ -1,0 +1,26 @@
+# Bifrost Git Ignore File
+
+# Compiled Go binaries
+bifrost
+*.exe
+*.out
+
+# Dependency folders (optional, if you vendor later)
+vendor/
+
+# Editor/IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs, temp files
+*.log
+*.tmp
+
+# OS junk files
+.DS_Store
+Thumbs.db
+
+# User config (don't commit user's personal settings)
+bifrost.toml
