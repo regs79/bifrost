@@ -1,12 +1,10 @@
-# Bifrost
+# 🌈 Bifrost
 
 **Bifrost** is a lightweight, configurable link picker for Linux desktops.
 
-When set as your default browser, Bifrost intercepts link clicks,  
-and displays a polished selection screen where you can quickly choose **which browser** to open the link with.
+When set as your default browser, Bifrost intercepts link clicks and displays a selection screen where you can quickly choose **which browser** to open the link with.
 
-Inspired by the Norse "Bifrost bridge" — connecting worlds —  
-Bifrost connects your clicks to the browser you want.
+Inspired by the Norse "Bifrost bridge" — connecting worlds — Bifrost connects your clicks to the browser you want.
 
 ---
 
@@ -32,7 +30,7 @@ Bifrost connects your clicks to the browser you want.
 
 Bifrost looks for a config file at:
 
-    ```$HOME/.config/bifrost/bifrost.toml```
+`$HOME/.config/bifrost/bifrost.toml`
 
 
 If not found, Bifrost uses built-in defaults.
@@ -43,12 +41,23 @@ You can create your own `bifrost.toml` to customize:
 - Theme colors (background, text, highlight)
 
 Example `bifrost.toml`:
-    ```[colors] background = "#2E3440CC" # Polar Night 0, semi-transparent text = "#ECEFF4FF" # Snow Storm 2 highlight = "#5E81ACAA" # Frost 3
 
-    [[browsers]] name = "Firefox" exec = "firefox" icon = "assets/firefox.png"
+```
+[colors]
+background = "#2E3440CC"
+text = "#ECEFF4FF"
+highlight = "#5E81ACAA"
 
-    [[browsers]] name = "Brave" exec = "brave" icon = "assets/brave.png"```
+[[browsers]]
+name = "Firefox"
+exec = "firefox"
+icon = "assets/firefox.png"
 
+[[browsers]]
+name = "Brave"
+exec = "brave"
+icon = "assets/brave.png"
+```
 
 ---
 
