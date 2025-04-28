@@ -240,10 +240,10 @@ func main() {
 
 	w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
 		switch k.Name {
-		case fyne.KeyRight, fyne.KeyL:
+		case fyne.KeyRight, fyne.KeyL, fyne.KeyUp, fyne.KeyK, fyne.KeyTab:
 			selectedIndex = (selectedIndex + 1) % len(browserBoxes)
 			updateHighlight()
-		case fyne.KeyLeft, fyne.KeyH:
+		case fyne.KeyLeft, fyne.KeyH, fyne.KeyDown, fyne.KeyJ:
 			selectedIndex = (selectedIndex - 1 + len(browserBoxes)) % len(browserBoxes)
 			updateHighlight()
 		case fyne.KeyReturn, fyne.KeyEnter:
@@ -260,10 +260,7 @@ func main() {
 
 	updateHighlight()
 
-	width := 160 * len(config.Browsers)
-	if width < 480 {
-		width = 480
-	}
+	width := max(160*len(config.Browsers), 480)
 	height := 150 + 40
 
 	w.Resize(fyne.NewSize(float32(width), float32(height)))
@@ -282,6 +279,14 @@ func main() {
 			container.NewHBox(leftSpacer, container.NewCenter(hbox), rightSpacer),
 		),
 	)
+
+	iconPath := filepath.Join("assets", "bifrost.png")
+	iconBytes, err := os.ReadFile(iconPath)
+	if err == nil {
+		w.SetIcon(fyne.NewStaticResource("bifrost.png", iconBytes))
+	} else {
+		log.Printf("Failed to load window icon: %v", err)
+	}
 
 	w.ShowAndRun()
 }

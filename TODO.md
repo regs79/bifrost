@@ -32,6 +32,9 @@ This file tracks outstanding work to complete Bifrost v1.0 and prepare for distr
 - [ ] Read colors (background, text, highlight) from config
 - [ ] Support hex codes with optional alpha (8 digits)
 - [ ] (Optional) Add simple light/dark mode toggle (future)
+- [ ] More options, just icons, just text, numbers on/off etc.
+- [ ] Vertical list display similar to something like Rofi
+- [ ] Custom fonts
 
 ---
 
