@@ -11,6 +11,7 @@ This file tracks outstanding work to complete Bifrost v1.0 and prepare for distr
 - [ ] Auto-create config directory if needed
 - [ ] (Optional) Save a default `bifrost.toml` if user chooses
 - [ ] Improve error handling on browser launch failures
+- [ ] Deal with this application may not be able to open all file types issue
 - [ ] Validate URL input at launch
 - [ ] Handle non-http links gracefully (e.g., `mailto:` `tel:`) (optional v2)
 
