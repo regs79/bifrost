@@ -1,5 +1,10 @@
 # Bifrost Git Ignore File
 
+# Local builds
+releases/
+*.tar.gz
+*.zip
+
 # Compiled Go binaries
 bifrost
 *.exe
@@ -21,6 +26,7 @@ vendor/
 # OS junk files
 .DS_Store
 Thumbs.db
+test.go
 
 # User config (don't commit user's personal settings)
 bifrost.toml

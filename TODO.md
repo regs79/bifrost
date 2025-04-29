@@ -35,6 +35,7 @@ This file tracks outstanding work to complete Bifrost v1.0 and prepare for distr
 - [ ] More options, just icons, just text, numbers on/off etc.
 - [ ] Vertical list display similar to something like Rofi
 - [ ] Custom fonts
+- [ ] Option to show url to be opened
 
 ---
 
