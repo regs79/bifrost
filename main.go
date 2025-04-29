@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"image/color"
 	"log"
@@ -16,6 +17,9 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/pelletier/go-toml"
 )
+
+//go:embed assets/*
+var embeddedAssets embed.FS
 
 type Config struct {
 	Colors struct {
@@ -124,6 +128,25 @@ func (b *ClickableBox) MouseOut() {}
 
 func (b *ClickableBox) MouseMoved(*desktop.MouseEvent) {}
 
+func loadAsset(path string) ([]byte, error) {
+	// Try loading from embedded assets
+	data, err := embeddedAssets.ReadFile(path)
+	if err == nil {
+		log.Printf("Loaded embedded asset: %s", path)
+		return data, nil
+	}
+
+	// Fallback to loading from the working directory
+	data, err = os.ReadFile(path)
+	if err == nil {
+		log.Printf("Loaded asset from working directory: %s", path)
+		return data, nil
+	}
+
+	log.Printf("Failed to load asset: %s, error: %v", path, err)
+	return nil, err
+}
+
 func main() {
 	// Load config
 	configPath := filepath.Join(os.Getenv("HOME"), ".config", "bifrost", "bifrost.toml")
@@ -172,10 +195,12 @@ func main() {
 	for i, browser := range config.Browsers {
 		browser := browser // capture
 
-		iconPath := filepath.Join(browser.Icon)
-		fileBytes, err := os.ReadFile(iconPath)
+		iconPath := browser.Icon // Use the Icon field directly
+		log.Printf("Attempting to load asset: %s", iconPath)
+		fileBytes, err := loadAsset(iconPath)
 		if err != nil {
 			log.Printf("Failed to read image: %v", err)
+			continue
 		}
 
 		img := canvas.NewImageFromResource(
@@ -281,7 +306,8 @@ func main() {
 	)
 
 	iconPath := filepath.Join("assets", "bifrost.png")
-	iconBytes, err := os.ReadFile(iconPath)
+	log.Printf("Attempting to load asset: %s", iconPath)
+	iconBytes, err := loadAsset(iconPath)
 	if err == nil {
 		w.SetIcon(fyne.NewStaticResource("bifrost.png", iconBytes))
 	} else {

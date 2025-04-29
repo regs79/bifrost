@@ -27,6 +27,7 @@ vendor/
 .DS_Store
 Thumbs.db
 test.go
+test.sh
 
 # User config (don't commit user's personal settings)
 bifrost.toml
