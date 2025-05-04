@@ -13,6 +13,7 @@ This file tracks outstanding work to complete Bifrost v1.0 and prepare for distr
 - [ ] Improve error handling on browser launch failures
 - [ ] Deal with this application may not be able to open all file types issue
 - [ ] Validate URL input at launch
+- [ ] Fallback images if none are supplied
 - [ ] Handle non-http links gracefully (e.g., `mailto:` `tel:`) (optional v2)
 
 ---
@@ -43,6 +44,7 @@ This file tracks outstanding work to complete Bifrost v1.0 and prepare for distr
 ## Packaging / Distribution
 
 - [ ] Create a public Git repository (GitHub, GitLab)
+- [ ] Better config instructions
 - [ ] Add README.md (install instructions, screenshots)
 - [ ] Add LICENSE file (MIT or Apache 2.0 recommended)
 - [ ] Tag releases (`v1.0.0`, etc.) on GitHub
