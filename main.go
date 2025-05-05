@@ -8,12 +8,14 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/pelletier/go-toml"
 )
@@ -23,12 +25,21 @@ var embeddedAssets embed.FS
 
 type Config struct {
 	Colors struct {
-		Background string `toml:"background"`
-		Text       string `toml:"text"`
-		Highlight  string `toml:"highlight"`
+		Light struct {
+			Background string `toml:"background"`
+			Text       string `toml:"text"`
+			Highlight  string `toml:"highlight"`
+		} `toml:"light"`
+		Dark struct {
+			Background string `toml:"background"`
+			Text       string `toml:"text"`
+			Highlight  string `toml:"highlight"`
+		} `toml:"dark"`
+		ThemeOverride string `toml:"theme_override"`
 	} `toml:"colors"`
 
 	Browsers []BrowserEntry `toml:"browsers"`
+	Platform string         `toml:"platform"`
 }
 
 type BrowserEntry struct {
@@ -37,36 +48,6 @@ type BrowserEntry struct {
 	Icon string `toml:"icon"`
 }
 
-func loadDefaultConfig() *Config {
-	return &Config{
-		Colors: struct {
-			Background string "toml:\"background\""
-			Text       string "toml:\"text\""
-			Highlight  string "toml:\"highlight\""
-		}{
-			Background: "#2E3440CC",
-			Text:       "#ECEFF4FF",
-			Highlight:  "#5E81ACAA",
-		},
-		Browsers: []BrowserEntry{
-			{
-				Name: "Firefox",
-				Exec: "firefox",
-				Icon: "assets/firefox.png",
-			},
-			{
-				Name: "Chrome",
-				Exec: "google-chrome-stable",
-				Icon: "assets/chrome.png",
-			},
-			{
-				Name: "Brave",
-				Exec: "brave",
-				Icon: "assets/brave.png",
-			},
-		},
-	}
-}
 
 func LoadConfig(path string) (*Config, error) {
 	var config Config
@@ -132,14 +113,14 @@ func loadAsset(path string) ([]byte, error) {
 	// Try loading from embedded assets
 	data, err := embeddedAssets.ReadFile(path)
 	if err == nil {
-		log.Printf("Loaded embedded asset: %s", path)
+		// log.Printf("Loaded embedded asset: %s", path)
 		return data, nil
 	}
 
 	// Fallback to loading from the working directory
 	data, err = os.ReadFile(path)
 	if err == nil {
-		log.Printf("Loaded asset from working directory: %s", path)
+		// log.Printf("Loaded asset from working directory: %s", path)
 		return data, nil
 	}
 
@@ -151,23 +132,177 @@ func main() {
 	// Load config
 	configPath := filepath.Join(os.Getenv("HOME"), ".config", "bifrost", "bifrost.toml")
 
-	config, err := LoadConfig(configPath)
-	if err != nil {
-		log.Printf("Config not found, using defaults: %v", err)
-		config = loadDefaultConfig()
+	myApp := app.New()
+	theme := myApp.Settings().Theme()
+	log.Printf("Theme object: %#v", theme)
+	isDark := false
+	if theme != nil {
+		if t, ok := theme.(interface{ IsDark() bool }); ok {
+			isDark = t.IsDark()
+		}
+	}
+	if isDark {
+		log.Println("System theme detected: dark")
+	} else {
+		log.Println("System theme detected: light")
 	}
 
-	// Parse colors
-	canvasBackgroundColor := parseHexColor(config.Colors.Background)
-	textColor := parseHexColor(config.Colors.Text)
-	highlightFillColor := parseHexColor(config.Colors.Highlight)
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		// Config not found or invalid: create default config file with example content
+		// myApp := app.New()
+		// theme := fyne.CurrentApp().Settings().Theme()
+		// Determine if the theme is dark
+		// isDark := false
+		// if theme != nil {
+		// 	if t, ok := theme.(interface{ IsDark() bool }); ok {
+		// 		isDark = t.IsDark()
+		// 	}
+		// }
+		// Set default Nord colors for light/dark
+		var defaultConfig Config
+		defaultConfig.Colors.Light.Background = "#ECEFF4"
+		defaultConfig.Colors.Light.Text = "#2E3440"
+		defaultConfig.Colors.Light.Highlight = "#5E81AC"
+		defaultConfig.Colors.Dark.Background = "#2E3440"
+		defaultConfig.Colors.Dark.Text = "#ECEFF4"
+		defaultConfig.Colors.Dark.Highlight = "#5E81AC"
+		defaultConfig.Colors.ThemeOverride = ""
+		defaultConfig.Platform = runtime.GOOS
+		configDir := filepath.Dir(configPath)
+		err := os.MkdirAll(configDir, 0o755)
+		if err != nil {
+			log.Fatalf("Could not create config directory: %v", err)
+		}
+		defaultConfigContent := `# Bifrost browser picker configuration
+# Add your preferred browsers below. Example:
 
-	myApp := app.New()
+# [[browsers]]
+# name = "Firefox"
+# exec = "firefox"
+# icon = "assets/firefox.png"
+
+# platform = "` + defaultConfig.Platform + `"
+
+[colors]
+theme_override = ""  # "light", "dark", or leave empty to follow system
+
+[colors.light]
+background = "#ECEFF4"
+text = "#2E3440"
+highlight = "#5E81AC"
+
+[colors.dark]
+background = "#2E3440"
+text = "#ECEFF4"
+highlight = "#5E81AC"
+`
+		err = os.WriteFile(configPath, []byte(defaultConfigContent), 0o644)
+		if err != nil {
+			log.Fatalf("Could not write default config file: %v", err)
+		}
+		// Show a Fyne window with instructions and exit
+		w := myApp.NewWindow("Bifrost")
+		w.SetFixedSize(true)
+		w.SetPadded(false)
+		w.SetMaster()
+
+		msg1 := canvas.NewText("No configuration found.", parseHexColor(defaultConfig.Colors.Light.Text))
+		msg2 := canvas.NewText("An new config file has been created in:", parseHexColor(defaultConfig.Colors.Light.Text))
+		msg3 := canvas.NewText(configPath, parseHexColor(defaultConfig.Colors.Light.Highlight))
+		msg4 := canvas.NewText("Please edit this file and restart Bifrost.", parseHexColor(defaultConfig.Colors.Light.Text))
+
+		for _, msg := range []*canvas.Text{msg1, msg2, msg3, msg4} {
+			msg.Alignment = fyne.TextAlignCenter
+			msg.TextSize = 16
+		}
+
+		w.SetContent(container.NewStack(
+			canvas.NewRectangle(parseHexColor(defaultConfig.Colors.Light.Background)),
+			container.NewVBox(
+				layout.NewSpacer(),
+				container.NewCenter(msg1),
+				container.NewCenter(msg2),
+				container.NewCenter(msg3),
+				container.NewCenter(msg4),
+				layout.NewSpacer(),
+			),
+		))
+
+		w.Resize(fyne.NewSize(480, 220))
+		w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+			switch k.Name {
+			case fyne.KeyEscape, fyne.KeyQ:
+				myApp.Quit()
+			}
+		})
+		w.ShowAndRun()
+		return
+	}
+
+	// Parse colors based on theme override and system theme
+	var bgColorHex, textColorHex, highlightHex string
+	switch config.Colors.ThemeOverride {
+	case "light":
+		bgColorHex = config.Colors.Light.Background
+		textColorHex = config.Colors.Light.Text
+		highlightHex = config.Colors.Light.Highlight
+	case "dark":
+		bgColorHex = config.Colors.Dark.Background
+		textColorHex = config.Colors.Dark.Text
+		highlightHex = config.Colors.Dark.Highlight
+	default:
+		if isDark {
+			bgColorHex = config.Colors.Dark.Background
+			textColorHex = config.Colors.Dark.Text
+			highlightHex = config.Colors.Dark.Highlight
+		} else {
+			bgColorHex = config.Colors.Light.Background
+			textColorHex = config.Colors.Light.Text
+			highlightHex = config.Colors.Light.Highlight
+		}
+	}
+
+	canvasBackgroundColor := parseHexColor(bgColorHex)
+	textColor := parseHexColor(textColorHex)
+	highlightFillColor := parseHexColor(highlightHex)
+
 	w := myApp.NewWindow("Bifrost")
 
 	w.SetFixedSize(true)
 	w.SetPadded(false)
 	w.SetMaster()
+
+	if len(config.Browsers) == 0 {
+		msg1 := canvas.NewText("No browsers found in config.", textColor)
+		msg2 := canvas.NewText("You can add your browsers in:", textColor)
+		msg3 := canvas.NewText(configPath, highlightFillColor)
+
+		for _, msg := range []*canvas.Text{msg1, msg2, msg3} {
+			msg.Alignment = fyne.TextAlignCenter
+			msg.TextSize = 16
+		}
+
+		w.SetContent(container.NewStack(
+			canvas.NewRectangle(canvasBackgroundColor),
+			container.NewVBox(
+				layout.NewSpacer(),
+				container.NewCenter(msg1),
+				container.NewCenter(msg2),
+				container.NewCenter(msg3),
+				layout.NewSpacer(),
+			),
+		))
+		w.Resize(fyne.NewSize(480, 220))
+		w.Canvas().SetOnTypedKey(func(k *fyne.KeyEvent) {
+			switch k.Name {
+			case fyne.KeyEscape, fyne.KeyQ:
+				myApp.Quit()
+			}
+		})
+		w.ShowAndRun()
+		return
+	}
 
 	var url string
 	if len(os.Args) > 1 {
@@ -196,7 +331,7 @@ func main() {
 		browser := browser // capture
 
 		iconPath := browser.Icon // Use the Icon field directly
-		log.Printf("Attempting to load asset: %s", iconPath)
+		// log.Printf("Attempting to load asset: %s", iconPath)
 		fileBytes, err := loadAsset(iconPath)
 		if err != nil {
 			log.Printf("Failed to read image: %v", err)
@@ -236,7 +371,12 @@ func main() {
 
 		clickable := NewClickableBox(content, func() {
 			fmt.Printf("Launching %s for URL %s\n", browser.Name, url)
-			cmd := exec.Command(browser.Exec, url)
+			var cmd *exec.Cmd
+			if runtime.GOOS == "darwin" {
+				cmd = exec.Command("open", "-a", browser.Exec, url)
+			} else {
+				cmd = exec.Command(browser.Exec, url)
+			}
 			err := cmd.Start()
 			if err != nil {
 				fmt.Printf("Failed to launch %s: %v\n", browser.Exec, err)
@@ -306,7 +446,7 @@ func main() {
 	)
 
 	iconPath := filepath.Join("assets", "bifrost.png")
-	log.Printf("Attempting to load asset: %s", iconPath)
+	// log.Printf("Attempting to load asset: %s", iconPath)
 	iconBytes, err := loadAsset(iconPath)
 	if err == nil {
 		w.SetIcon(fyne.NewStaticResource("bifrost.png", iconBytes))
